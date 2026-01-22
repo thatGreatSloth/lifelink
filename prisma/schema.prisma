@@ -1,0 +1,193 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model AdminProfile {
+  id         String    @id
+  userId     String    @unique
+  region     String
+  approvedBy String?
+  approvedAt DateTime?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime
+  User       User      @relation(fields: [userId], references: [id])
+}
+
+model Appointment {
+  id              String            @id
+  donorId         String
+  bloodRequestId  String?
+  donationCenter  String
+  appointmentDate DateTime
+  status          AppointmentStatus @default(SCHEDULED)
+  checkInTime     DateTime?
+  completedAt     DateTime?
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime
+  BloodRequest    BloodRequest?     @relation(fields: [bloodRequestId], references: [id])
+  User            User              @relation(fields: [donorId], references: [id])
+}
+
+model BloodRequest {
+  id              String             @id
+  requesterId     String
+  bloodType       BloodType
+  unitsRequired   Int
+  urgency         UrgencyLevel
+  status          BloodRequestStatus @default(PENDING)
+  hospitalName    String?
+  notes           String?
+  latitude        Decimal
+  longitude       Decimal
+  location        String
+  matchedDonorIds String[]
+  fulfilledById   String?
+  expiresAt       DateTime
+  fulfilledAt     DateTime?
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime
+  Appointment     Appointment[]
+  User            User               @relation(fields: [requesterId], references: [id])
+}
+
+model DonorProfile {
+  id               String    @id
+  userId           String    @unique
+  bloodType        BloodType
+  lastDonationDate DateTime?
+  donationCount    Int       @default(0)
+  isEligible       Boolean   @default(true)
+  latitude         Decimal?
+  longitude        Decimal?
+  location         String
+  medicalNotes     String?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime
+  User             User      @relation(fields: [userId], references: [id])
+}
+
+model Notification {
+  id        String              @id
+  userId    String
+  type      NotificationType
+  channel   NotificationChannel
+  title     String
+  message   String
+  status    NotificationStatus  @default(SENT)
+  readAt    DateTime?
+  createdAt DateTime            @default(now())
+  User      User                @relation(fields: [userId], references: [id])
+}
+
+model RecipientProfile {
+  id           String   @id
+  userId       String   @unique
+  organization String?
+  verified     Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime
+  User         User     @relation(fields: [userId], references: [id])
+}
+
+model User {
+  id                              String            @id
+  firstName                       String
+  lastName                        String
+  email                           String            @unique
+  phoneNumber                     String            @unique
+  passwordHash                    String
+  role                            UserRole          @default(UNASSIGNED)
+  status                          UserStatus        @default(PENDING)
+  authProvider                    AuthProvider      @default(LOCAL)
+  emailVerificationToken          String?
+  emailVerificationTokenExpiresAt DateTime?
+  isEmailVerified                 Boolean           @default(false)
+  isPhoneVerified                 Boolean           @default(false)
+  lastLoginAt                     DateTime?
+  createdAt                       DateTime          @default(now())
+  updatedAt                       DateTime
+  deletedAt                       DateTime?
+  AdminProfile                    AdminProfile?
+  Appointment                     Appointment[]
+  BloodRequest                    BloodRequest[]
+  DonorProfile                    DonorProfile?
+  Notification                    Notification[]
+  RecipientProfile                RecipientProfile?
+}
+
+enum AppointmentStatus {
+  SCHEDULED
+  COMPLETED
+  CANCELLED
+  NO_SHOW
+}
+
+enum AuthProvider {
+  LOCAL
+  GOOGLE
+  APPLE
+}
+
+enum BloodRequestStatus {
+  PENDING
+  MATCHING
+  FULFILLED
+  CANCELLED
+  EXPIRED
+}
+
+enum BloodType {
+  A_POS
+  A_NEG
+  B_POS
+  B_NEG
+  AB_POS
+  AB_NEG
+  O_POS
+  O_NEG
+}
+
+enum NotificationChannel {
+  PUSH
+  SMS
+  EMAIL
+}
+
+enum NotificationStatus {
+  SENT
+  DELIVERED
+  READ
+  FAILED
+}
+
+enum NotificationType {
+  BLOOD_REQUEST
+  APPOINTMENT
+  SYSTEM
+}
+
+enum UrgencyLevel {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum UserRole {
+  DONOR
+  RECIPIENT
+  ADMIN
+  SUPER_ADMIN
+  UNASSIGNED
+}
+
+enum UserStatus {
+  PENDING
+  ACTIVE
+  SUSPENDED
+}
