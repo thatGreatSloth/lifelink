@@ -1,0 +1,91 @@
+// lib/repositories/user.repository.ts
+import { UserStatus } from "../../generated/prisma/client";
+import { BaseRepository } from "./base.repository";
+
+export interface CreateUserFromClerkPayload {
+  clerkId: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  phoneNumber?: string;
+  emailVerified?: boolean;
+  phoneVerified?: boolean;
+}
+
+export class UserRepository extends BaseRepository {
+  /**
+   * Create a new user from Clerk webhook payload
+   */
+  static async createFromClerk(payload: CreateUserFromClerkPayload) {
+    return this.db.user.create({
+      data: {
+        id: payload.clerkId,
+        email: payload.email,
+        firstName: payload.firstName,
+        lastName: payload.lastName,
+        phoneNumber: payload.phoneNumber || "",
+        passwordHash: "", // Clerk handles auth, no password needed
+         
+        isEmailVerified: payload.emailVerified ?? false,
+        isPhoneVerified: payload.phoneVerified ?? false,
+        lastLoginAt: new Date(),
+        updatedAt: new Date(),
+      },
+    });
+  }
+
+  /**
+   * Find user by Clerk ID
+   */
+  static async findByClerkId(clerkId: string) {
+    return this.db.user.findUnique({
+      where: { id: clerkId },
+    });
+  }
+
+  /**
+   * Update user from Clerk webhook payload
+   */
+  static async updateFromClerk(
+    clerkId: string,
+    payload: Partial<CreateUserFromClerkPayload>
+  ) {
+    return this.db.user.update({
+      where: { id: clerkId },
+      data: {
+        email: payload.email,
+        firstName: payload.firstName,
+        lastName: payload.lastName,
+        phoneNumber: payload.phoneNumber,
+        isEmailVerified: payload.emailVerified,
+        isPhoneVerified: payload.phoneVerified,
+        updatedAt: new Date(),
+      },
+    });
+  }
+
+  /**
+   * Soft delete user
+   */
+  static async deleteByClerkId(clerkId: string) {
+    return this.db.user.update({
+      where: { id: clerkId },
+      data: {
+        deletedAt: new Date(),
+        status: UserStatus.PENDING, // or create a DELETED status
+      },
+    });
+  }
+
+  /**
+   * Update last login timestamp
+   */
+  static async updateLastLogin(clerkId: string) {
+    return this.db.user.update({
+      where: { id: clerkId },
+      data: {
+        lastLoginAt: new Date(),
+      },
+    });
+  }
+}

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import Link from "next/link";
 
 import {
   ClerkProvider,
@@ -10,6 +11,7 @@ import {
   SignedOut,
   UserButton,
 } from '@clerk/nextjs';
+import { FiLogIn, FiUserPlus, FiUser } from 'react-icons/fi';
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -55,22 +57,35 @@ export default function RootLayout({
                   </div>
                   <span className="text-2xl font-bold text-red-600">lifeLink</span>
                 </div>
-                <div className="flex items-center space-x-4">
+                <div className="flex items-center space-x-3">
                   <SignedOut>
                     <SignInButton mode="modal">
-                      <button className="px-4 py-2 text-gray-700 hover:text-red-600 transition-colors">
-                        Login
+                      <button 
+                        className="p-2.5 text-gray-700 hover:text-red-600 hover:bg-red-50 rounded-full transition-all"
+                        title="Login"
+                      >
+                        <FiLogIn className="w-6 h-6" />
                       </button>
                     </SignInButton>
                     <SignUpButton mode="modal">
-                      <button className="px-6 py-2 bg-red-600 text-white rounded-full hover:bg-red-700 transition-colors shadow-lg hover:shadow-xl">
-                        Sign Up
+                      <button 
+                        className="p-2.5 bg-red-600 text-white rounded-full hover:bg-red-700 transition-all shadow-lg hover:shadow-xl"
+                        title="Sign Up"
+                      >
+                        <FiUserPlus className="w-6 h-6" />
                       </button>
                     </SignUpButton>
                   </SignedOut>
                   <SignedIn>
+                    <Link 
+                      href="/profile/update"
+                      className="p-2.5 text-gray-700 hover:text-red-600 hover:bg-red-50 rounded-full transition-all"
+                      title="Update Profile"
+                    >
+                      <FiUser className="w-6 h-6" />
+                    </Link>
                     <UserButton 
-                      afterSignOutUrl="/"
+                      
                       appearance={{
                         elements: {
                           avatarBox: "w-10 h-10"
@@ -82,7 +97,9 @@ export default function RootLayout({
               </div>
             </div>
           </nav>
-          {children}
+          <main className="pt-16">
+            {children}
+          </main>
         </body>
       </html>
     </ClerkProvider>

@@ -11,9 +11,11 @@
   "dependencies": {
     "@clerk/nextjs": "^6.36.9",
     "gsap": "^3.14.2",
+    "lucide-react": "^0.562.0",
     "next": "16.1.4",
     "react": "19.2.3",
-    "react-dom": "19.2.3"
+    "react-dom": "19.2.3",
+    "svix": "^1.84.1"
   },
   "devDependencies": {
     "@prisma/adapter-pg": "^7.3.0",
