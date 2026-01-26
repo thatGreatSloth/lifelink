@@ -1,15 +1,17 @@
 // lib/repositories/user.repository.ts
-import { UserStatus } from "../../generated/prisma/client";
+import { UserRole, UserStatus } from "../../generated/prisma/client";
 import { BaseRepository } from "./base.repository";
 
+// Payload structure for creating/updating user from Clerk webhook. If a attribute is not provided then it cannot be accessed.
 export interface CreateUserFromClerkPayload {
   clerkId: string;
   email: string;
   firstName: string;
   lastName: string;
-  phoneNumber?: string;
+  phoneNumber?: string | null;
   emailVerified?: boolean;
   phoneVerified?: boolean;
+  role?: UserRole;
 }
 
 export class UserRepository extends BaseRepository {
@@ -23,13 +25,15 @@ export class UserRepository extends BaseRepository {
         email: payload.email,
         firstName: payload.firstName,
         lastName: payload.lastName,
-        phoneNumber: payload.phoneNumber || "",
+        phoneNumber: payload.phoneNumber ,
         passwordHash: "", // Clerk handles auth, no password needed
-         
+
         isEmailVerified: payload.emailVerified ?? false,
         isPhoneVerified: payload.phoneVerified ?? false,
+
         lastLoginAt: new Date(),
         updatedAt: new Date(),
+        role: UserRole.UNASSIGNED,
       },
     });
   }
@@ -48,7 +52,7 @@ export class UserRepository extends BaseRepository {
    */
   static async updateFromClerk(
     clerkId: string,
-    payload: Partial<CreateUserFromClerkPayload>
+    payload: Partial<CreateUserFromClerkPayload> & { role?: UserRole }
   ) {
     return this.db.user.update({
       where: { id: clerkId },
@@ -59,6 +63,7 @@ export class UserRepository extends BaseRepository {
         phoneNumber: payload.phoneNumber,
         isEmailVerified: payload.emailVerified,
         isPhoneVerified: payload.phoneVerified,
+        role:  UserRole.UNASSIGNED,
         updatedAt: new Date(),
       },
     });

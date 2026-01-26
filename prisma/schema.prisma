@@ -55,24 +55,60 @@ model BloodRequest {
   User            User               @relation(fields: [requesterId], references: [id])
 }
 
+
 model DonorProfile {
-  id               String    @id
-  userId           String    @unique
+  id               String   @id @default(uuid())
+  userId           String   @unique
   bloodType        BloodType
   lastDonationDate DateTime?
-  donationCount    Int       @default(0)
-  isEligible       Boolean   @default(true)
+  donationCount    Int      @default(0)
+
   latitude         Decimal?
   longitude        Decimal?
   location         String
-  medicalNotes     String?
-  createdAt        DateTime  @default(now())
-  updatedAt        DateTime
-  User             User      @relation(fields: [userId], references: [id])
+
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  User             User     @relation(fields: [userId], references: [id])
+  screenings       HealthScreening[]
 }
 
+model HealthScreening {
+  id                String   @id @default(uuid())
+  donorId           String
+  screeningDate     DateTime @default(now())
+
+  // Core eligibility
+  isEligible        Boolean
+  inEligibleReason  String?
+
+  // Medical
+  hasChronicIllness Boolean
+  chronicConditions ChronicCondition[]
+
+  // Temporary blockers
+  recentFever       Boolean
+  recentSurgery     Boolean
+  recentVaccination Boolean
+  pregnancyStatus   PregnancyStatus?
+
+  // Risk factors
+  recentTattoo      Boolean
+  recentTravel      Boolean
+
+  // Allergies
+  allergies         Allergy[]
+
+  notes             String?
+
+  donor             DonorProfile @relation(fields: [donorId], references: [id])
+}
+
+
+
 model Notification {
-  id        String              @id
+  id        String              @id @default(uuid())
   userId    String
   type      NotificationType
   channel   NotificationChannel
@@ -85,21 +121,21 @@ model Notification {
 }
 
 model RecipientProfile {
-  id           String   @id
+  id           String   @id @default(uuid())
   userId       String   @unique
   organization String?
   verified     Boolean  @default(false)
   createdAt    DateTime @default(now())
-  updatedAt    DateTime
+  updatedAt    DateTime @updatedAt
   User         User     @relation(fields: [userId], references: [id])
 }
 
 model User {
-  id                              String            @id
+  id                              String            @id @default(uuid())
   firstName                       String
   lastName                        String
   email                           String            @unique
-  phoneNumber                     String            @unique
+  phoneNumber                    String?           @unique
   passwordHash                    String
   role                            UserRole          @default(UNASSIGNED)
   status                          UserStatus        @default(PENDING)
@@ -110,7 +146,7 @@ model User {
   isPhoneVerified                 Boolean           @default(false)
   lastLoginAt                     DateTime?
   createdAt                       DateTime          @default(now())
-  updatedAt                       DateTime       @updatedAt
+  updatedAt                       DateTime          @updatedAt
   deletedAt                       DateTime?
   AdminProfile                    AdminProfile?
   Appointment                     Appointment[]
@@ -119,6 +155,29 @@ model User {
   Notification                    Notification[]
   RecipientProfile                RecipientProfile?
 }
+enum ChronicCondition {
+  DIABETES
+  HEART_DISEASE
+  ASTHMA
+  HYPERTENSION
+  EPILEPSY
+  HIV
+  HEPATITIS
+}
+
+enum Allergy {
+  FOOD
+  MEDICATION
+  LATEX
+  NONE
+}
+
+enum PregnancyStatus {
+  NOT_PREGNANT
+  PREGNANT
+  RECENTLY_PREGNANT
+}
+
 
 enum AppointmentStatus {
   SCHEDULED

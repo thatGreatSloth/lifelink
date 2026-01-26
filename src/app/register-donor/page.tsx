@@ -16,7 +16,10 @@ interface DonorFormData {
   
   // Donor profile fields
   bloodType: BloodType | '';
-  location: string;
+  country: string;
+  city: string;
+  area: string;
+  landmark?: string;
   latitude?: number;
   longitude?: number;
   lastDonationDate?: string;
@@ -36,7 +39,10 @@ export default function RegisterDonor() {
     password: '',
     confirmPassword: '',
     bloodType: '',
-    location: '',
+    country: '',
+    city: '',
+    area: '',
+    landmark: '',
     medicalNotes: '',
     agreedToTerms: false,
   });
@@ -58,6 +64,35 @@ export default function RegisterDonor() {
     O_NEG: 'O-',
   };
 
+  // Country and cities data
+  const countries = [
+    'United States',
+    'United Kingdom',
+    'Canada',
+    'Australia',
+    'India',
+    'South Africa',
+    'Nigeria',
+    'Kenya',
+    'Ghana',
+    'Other',
+  ];
+
+  const citiesByCountry: Record<string, string[]> = {
+    'United States': ['New York', 'Los Angeles', 'Chicago', 'Houston', 'Phoenix', 'Philadelphia', 'San Antonio', 'San Diego', 'Dallas', 'San Jose'],
+    'United Kingdom': ['London', 'Birmingham', 'Manchester', 'Glasgow', 'Liverpool', 'Leeds', 'Sheffield', 'Edinburgh', 'Bristol', 'Leicester'],
+    'Canada': ['Toronto', 'Montreal', 'Vancouver', 'Calgary', 'Edmonton', 'Ottawa', 'Winnipeg', 'Quebec City', 'Hamilton', 'Kitchener'],
+    'Australia': ['Sydney', 'Melbourne', 'Brisbane', 'Perth', 'Adelaide', 'Gold Coast', 'Canberra', 'Newcastle', 'Wollongong', 'Logan City'],
+    'India': ['Mumbai', 'Delhi', 'Bangalore', 'Hyderabad', 'Ahmedabad', 'Chennai', 'Kolkata', 'Surat', 'Pune', 'Jaipur'],
+    'South Africa': ['Johannesburg', 'Cape Town', 'Durban', 'Pretoria', 'Port Elizabeth', 'Bloemfontein', 'East London', 'Nelspruit', 'Polokwane', 'Kimberley'],
+    'Nigeria': ['Lagos', 'Kano', 'Ibadan', 'Abuja', 'Port Harcourt', 'Benin City', 'Kaduna', 'Enugu', 'Jos', 'Ilorin'],
+    'Kenya': ['Nairobi', 'Mombasa', 'Kisumu', 'Nakuru', 'Eldoret', 'Ruiru', 'Kikuyu', 'Thika', 'Malindi', 'Kitale'],
+    'Ghana': ['Accra', 'Kumasi', 'Tamale', 'Sekondi-Takoradi', 'Ashaiman', 'Sunyani', 'Cape Coast', 'Obuasi', 'Teshie', 'Tema'],
+    'Other': [],
+  };
+
+  const availableCities = formData.country ? (citiesByCountry[formData.country] || []) : [];
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target;
     const checked = (e.target as HTMLInputElement).checked;
@@ -73,46 +108,16 @@ export default function RegisterDonor() {
     }
   };
 
-  const getCurrentLocation = () => {
-    setUseCurrentLocation(true);
-    if ('geolocation' in navigator) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          setFormData(prev => ({
-            ...prev,
-            latitude: position.coords.latitude,
-            longitude: position.coords.longitude,
-          }));
-          // Optionally, reverse geocode to get address
-          reverseGeocode(position.coords.latitude, position.coords.longitude);
-        },
-        (error) => {
-          console.error('Error getting location:', error);
-          setErrors(prev => ({ ...prev, location: 'Unable to get current location' }));
-          setUseCurrentLocation(false);
-        }
-      );
-    } else {
-      setErrors(prev => ({ ...prev, location: 'Geolocation is not supported by your browser' }));
-      setUseCurrentLocation(false);
-    }
-  };
-
-  const reverseGeocode = async (lat: number, lng: number) => {
-    try {
-      // Using a free geocoding service (you may want to use Google Maps API with your key)
-      const response = await fetch(
-        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`
-      );
-      const data = await response.json();
-      if (data.display_name) {
-        setFormData(prev => ({
-          ...prev,
-          location: data.display_name,
-        }));
-      }
-    } catch (error) {
-      console.error('Error reverse geocoding:', error);
+  // Handle country change to reset city selection
+  const handleCountryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const country = e.target.value;
+    setFormData(prev => ({
+      ...prev,
+      country,
+      city: '', // Reset city when country changes
+    }));
+    if (errors.country) {
+      setErrors(prev => ({ ...prev, country: '' }));
     }
   };
 
@@ -147,7 +152,9 @@ export default function RegisterDonor() {
 
     // Donor profile validation
     if (!formData.bloodType) newErrors.bloodType = 'Blood type is required';
-    if (!formData.location.trim()) newErrors.location = 'Location is required';
+    if (!formData.country.trim()) newErrors.country = 'Country is required';
+    if (!formData.city.trim()) newErrors.city = 'City is required';
+    if (!formData.area.trim()) newErrors.area = 'Area/Suburb is required';
 
     if (!formData.agreedToTerms) {
       newErrors.agreedToTerms = 'You must agree to the terms and conditions';
@@ -180,7 +187,11 @@ export default function RegisterDonor() {
           phoneNumber: formData.phoneNumber,
           password: formData.password,
           bloodType: formData.bloodType,
-          location: formData.location,
+          country: formData.country,
+          city: formData.city,
+          area: formData.area,
+          landmark: formData.landmark,
+          location: `${formData.area}, ${formData.city}, ${formData.country}`,
           latitude: formData.latitude,
           longitude: formData.longitude,
           lastDonationDate: formData.lastDonationDate,
@@ -396,34 +407,92 @@ export default function RegisterDonor() {
                   )}
                 </div>
 
+             
+
+                {/* City Dropdown */}
                 <div>
-                  <label htmlFor="location" className="block text-sm font-medium text-gray-700 mb-1">
-                    Location <span className="text-red-500">*</span>
+                  <label htmlFor="city" className="block text-sm font-medium text-gray-700 mb-1">
+                    City / Town <span className="text-red-500">*</span>
                   </label>
-                  <div className="flex gap-2">
+                  {formData.country === 'Other' || availableCities.length === 0 ? (
                     <input
                       type="text"
-                      id="location"
-                      name="location"
-                      value={formData.location}
+                      id="city"
+                      name="city"
+                      value={formData.city}
                       onChange={handleInputChange}
-                      className={`flex-1 px-4 py-2 border rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent ${
-                        errors.location ? 'border-red-500' : 'border-red-200'
+                      className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent ${
+                        errors.city ? 'border-red-500' : 'border-red-200'
                       }`}
-                      placeholder="City, State, Country"
+                      placeholder="Enter your city"
+                      disabled={!formData.country}
                     />
-                    <button
-                      type="button"
-                      onClick={getCurrentLocation}
-                      disabled={useCurrentLocation}
-                      className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:bg-gray-400 disabled:cursor-not-allowed whitespace-nowrap"
+                  ) : (
+                    <select
+                      id="city"
+                      name="city"
+                      value={formData.city}
+                      onChange={handleInputChange}
+                      className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent ${
+                        errors.city ? 'border-red-500' : 'border-red-200'
+                      }`}
+                      disabled={!formData.country}
                     >
-                      📍 Current
-                    </button>
-                  </div>
-                  {errors.location && (
-                    <p className="mt-1 text-sm text-red-500">{errors.location}</p>
+                      <option value="">Select your city</option>
+                      {availableCities.map((city) => (
+                        <option key={city} value={city}>
+                          {city}
+                        </option>
+                      ))}
+                      <option value="Other">Other</option>
+                    </select>
                   )}
+                  {errors.city && (
+                    <p className="mt-1 text-sm text-red-500">{errors.city}</p>
+                  )}
+                  {!formData.country && (
+                    <p className="mt-1 text-sm text-gray-500">Please select a country first</p>
+                  )}
+                </div>
+
+                {/* Area/Suburb Input */}
+                <div>
+                  <label htmlFor="area" className="block text-sm font-medium text-gray-700 mb-1">
+                    Area / Suburb <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    id="area"
+                    name="area"
+                    value={formData.area}
+                    onChange={handleInputChange}
+                    className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent ${
+                      errors.area ? 'border-red-500' : 'border-red-200'
+                    }`}
+                    placeholder="e.g., Downtown, Suburbs, etc."
+                  />
+                  {errors.area && (
+                    <p className="mt-1 text-sm text-red-500">{errors.area}</p>
+                  )}
+                </div>
+
+                {/* Landmark Input (Optional) */}
+                <div>
+                  <label htmlFor="landmark" className="block text-sm font-medium text-gray-700 mb-1">
+                    Landmark or Hospital (Optional)
+                  </label>
+                  <input
+                    type="text"
+                    id="landmark"
+                    name="landmark"
+                    value={formData.landmark || ''}
+                    onChange={handleInputChange}
+                    className="w-full px-4 py-2 border border-red-200 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                    placeholder="e.g., Near City Hospital, Main Street Mall"
+                  />
+                  <p className="mt-1 text-sm text-gray-500">
+                    Provide a nearby landmark or hospital to help locate you
+                  </p>
                 </div>
 
                 <div>

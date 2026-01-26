@@ -2,6 +2,7 @@ import { Webhook } from 'svix'
 import { headers } from 'next/headers'
 import { NextResponse } from 'next/server'
 import { UserRepository } from '../../../../../lib/repositories/user.repository'
+import { UserRole } from '../../../../../generated/prisma/enums'
 
 type ClerkWebhookEvent = {
   type: string
@@ -18,8 +19,13 @@ type ClerkWebhookEvent = {
     first_name: string
     last_name: string
     [key: string]: any
+    role?: UserRole
   }
 }
+
+//declare default roles for new users. 
+const DEFAULT_ROLE = UserRole.UNASSIGNED;
+
 
 export async function POST(req: Request) {
   console.log('🔔 Webhook received!')
@@ -59,9 +65,10 @@ export async function POST(req: Request) {
           email: data.email_addresses[0]?.email_address || '',
           firstName: data.first_name || '',
           lastName: data.last_name || '',
-          phoneNumber: data.phone_numbers[0]?.phone_number,
+       
           emailVerified: data.email_addresses[0]?.verification?.status === 'verified',
-          phoneVerified: data.phone_numbers[0]?.verification?.status === 'verified',
+      
+          role:  DEFAULT_ROLE,
         })
         break
 
@@ -70,9 +77,10 @@ export async function POST(req: Request) {
           email: data.email_addresses[0]?.email_address,
           firstName: data.first_name,
           lastName: data.last_name,
-          phoneNumber: data.phone_numbers[0]?.phone_number,
+        
           emailVerified: data.email_addresses[0]?.verification?.status === 'verified',
-          phoneVerified: data.phone_numbers[0]?.verification?.status === 'verified',
+   
+          role:  DEFAULT_ROLE,
         })
         break
 

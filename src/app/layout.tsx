@@ -10,8 +10,8 @@ import {
   SignedIn,
   SignedOut,
   UserButton,
-} from '@clerk/nextjs';
-import { FiLogIn, FiUserPlus, FiUser } from 'react-icons/fi';
+} from "@clerk/nextjs";
+import { FiLogIn, FiUserPlus, FiUser } from "react-icons/fi";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -34,9 +34,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-     <ClerkProvider>
+    <ClerkProvider>
       <html lang="en">
-        <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+        <body
+          className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        >
           {/* Navigation */}
           <nav className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-md shadow-sm">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -55,12 +57,14 @@ export default function RootLayout({
                       />
                     </svg>
                   </div>
-                  <span className="text-2xl font-bold text-red-600">lifeLink</span>
+                  <span className="text-2xl font-bold text-red-600">
+                    lifeLink
+                  </span>
                 </div>
                 <div className="flex items-center space-x-3">
                   <SignedOut>
                     <SignInButton mode="modal">
-                      <button 
+                      <button
                         className="p-2.5 text-gray-700 hover:text-red-600 hover:bg-red-50 rounded-full transition-all"
                         title="Login"
                       >
@@ -68,7 +72,7 @@ export default function RootLayout({
                       </button>
                     </SignInButton>
                     <SignUpButton mode="modal">
-                      <button 
+                      <button
                         className="p-2.5 bg-red-600 text-white rounded-full hover:bg-red-700 transition-all shadow-lg hover:shadow-xl"
                         title="Sign Up"
                       >
@@ -77,19 +81,18 @@ export default function RootLayout({
                     </SignUpButton>
                   </SignedOut>
                   <SignedIn>
-                    <Link 
+                    <Link
                       href="/profile/update"
                       className="p-2.5 text-gray-700 hover:text-red-600 hover:bg-red-50 rounded-full transition-all"
                       title="Update Profile"
                     >
                       <FiUser className="w-6 h-6" />
                     </Link>
-                    <UserButton 
-                      
+                    <UserButton
                       appearance={{
                         elements: {
-                          avatarBox: "w-10 h-10"
-                        }
+                          avatarBox: "w-10 h-10",
+                        },
                       }}
                     />
                   </SignedIn>
@@ -97,9 +100,7 @@ export default function RootLayout({
               </div>
             </div>
           </nav>
-          <main className="pt-16">
-            {children}
-          </main>
+          <main className="pt-16">{children}</main>
         </body>
       </html>
     </ClerkProvider>
